@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hybrid CBR & CF Diagnostic System</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --breakdown-bg: #f1f5f9;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.5;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+        }
+        .grid-header {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 2fr;
+            gap: 10px;
+            font-weight: bold;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border);
+            margin-bottom: 15px;
+        }
+        .symptom-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 2fr;
+            gap: 10px;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .symptom-name { font-size: 0.95rem; }
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            opacity: 0.4;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+        .slider-container.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        input[type="range"] { width: 100%; }
+        .badge {
+            background-color: #e0e7ff;
+            color: #3730a3;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.2s;
+        }
+        button:hover { background-color: #1d4ed8; }
+        .results {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .result-box {
+            background-color: #f1f5f9;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        .result-val {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin-top: 8px;
+        }
+        .controls {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        
+        /* Breakdown Section Styles */
+        .breakdown {
+            margin-top: 30px;
+            background: var(--breakdown-bg);
+            border-radius: 8px;
+            padding: 20px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.85rem;
+            border: 1px solid var(--border);
+            overflow-x: auto;
+        }
+        .breakdown h4 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-size: 1.1rem;
+            color: var(--primary);
+            border-bottom: 1px solid #cbd5e1;
+            padding-bottom: 5px;
+        }
+        .breakdown-section { margin-bottom: 20px; }
+        .math-line {
+            background: #ffffff;
+            padding: 8px 12px;
+            border-left: 3px solid var(--primary);
+            margin: 4px 0 12px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        ul { margin-top: 5px; padding-left: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h2>Expert System: Type 2 Diabetes</h2>
+        <p>Hybrid CBR & CF Diagnostic Engine with Calculation Breakdown</p>
+    </div>
+
+    <div class="card">
+        <div class="controls">
+            <strong>Hybrid Method Configuration</strong>
+
+            <p style="margin:8px 0 0;color:#64748b;">
+                This expert system uses a fixed weighting configuration:
+                <strong>20% Case-Based Reasoning (CBR)</strong> and
+                <strong>80% Certainty Factor (CF)</strong>.
+            </p>
+        </div>
+
+        <div class="grid-header">
+            <div>Symptom / Feature</div>
+            <div>Present?</div>
+            <div>Expert CF</div>
+            <div>Your Certainty</div>
+        </div>
+        <div id="symptomsList"></div>
+    </div>
+
+    <button onclick="calculateDiagnosis()">Calculate Diagnosis & Show Steps</button>
+
+    <div class="card" id="resultCard" style="display: none; margin-top: 20px;">
+        <h3>Diagnostic Results</h3>
+        <div class="results">
+            <div class="result-box">
+                <div>Historical Similarity (CBR)</div>
+                <div class="result-val" id="cbrResult">0%</div>
+            </div>
+            <div class="result-box">
+                <div>Expert Confidence (CF)</div>
+                <div class="result-val" id="cfResult">0%</div>
+            </div>
+            <div class="result-box" style="background-color: #eff6ff; border-color: #bfdbfe;">
+                <div>Final Hybrid Score</div>
+                <div class="result-val" id="finalResult">0%</div>
+            </div>
+        </div>
+        
+        <div class="breakdown" id="breakdownPanel">
+            <!-- Breakdown steps will be injected here -->
+        </div>
+    </div>
+</div>
+
+<script>
+    const dataset = [
+        { id: 'polyuria', label: 'Polyuria (Frequent urination)', w: 0.203702, cf: 0.7 },
+        { id: 'polydipsia', label: 'Polydipsia (Frequent thirst)', w: 0.202658, cf: 0.7 },
+        { id: 'gender', label: 'Risk Gender (Male)', w: 0.104876, cf: null },
+        { id: 'age', label: 'Age > 40', w: 0.095522, cf: null },
+        { id: 'paresis', label: 'Partial paresis', w: 0.055078, cf: null },
+        { id: 'weightloss', label: 'Sudden/Unexplained weight loss', w: 0.052379, cf: 0.4 },
+        { id: 'alopecia', label: 'Alopecia', w: 0.044073, cf: null },
+        { id: 'irritability', label: 'Irritability', w: 0.039392, cf: null },
+        { id: 'polyphagia', label: 'Polyphagia (Excessive hunger)', w: 0.030942, cf: 0.7 },
+        { id: 'visual', label: 'Visual blurring', w: 0.030147, cf: 0.3 },
+        { id: 'itching', label: 'Itching', w: 0.029924, cf: 0.1 },
+        { id: 'healing', label: 'Delayed wound healing', w: 0.028387, cf: 0.7 },
+        { id: 'stiffness', label: 'Muscle stiffness', w: 0.026561, cf: null },
+        { id: 'thrush', label: 'Genital thrush', w: 0.021007, cf: null },
+        { id: 'weakness', label: 'General weakness / tiredness', w: 0.018950, cf: 0.1 },
+        { id: 'obesity', label: 'Obesity > 20% from normal', w: 0.016403, cf: 0.6 },
+        { id: 'parents', label: 'Parents with Type 2 Diabetes', w: 0, cf: 0.5 },
+        { id: 'numbness', label: 'Numbness/pain in hands/feet', w: 0, cf: 0.4 },
+        { id: 'bloodsugar', label: 'High blood sugar (>140 mg/dl)', w: 0, cf: 0.9 },
+        { id: 'nausea', label: 'Nausea/vomiting/abdominal pain', w: 0, cf: 0.3 },
+        { id: 'drymouth', label: 'Dry mouth', w: 0, cf: 0.2 },
+        { id: 'dizziness', label: 'Dizziness', w: 0, cf: 0.1 }
+    ];
+
+    const totalCBRWeight = dataset.reduce((sum, item) => sum + item.w, 0);
+    const listEl = document.getElementById('symptomsList');
+    
+    // Build UI
+    dataset.forEach((item, index) => {
+        const hasCF = item.cf !== null;
+        const row = document.createElement('div');
+        row.className = 'symptom-row';
+        
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'symptom-name';
+        nameDiv.textContent = item.label;
+        row.appendChild(nameDiv);
+
+        const checkDiv = document.createElement('div');
+        const check = document.createElement('input');
+        check.type = 'checkbox';
+        check.id = `chk_${index}`;
+        check.onchange = () => toggleSlider(index, check.checked, hasCF);
+        checkDiv.appendChild(check);
+        row.appendChild(checkDiv);
+
+        const expDiv = document.createElement('div');
+        if (hasCF) {
+            const badge = document.createElement('span');
+            badge.className = 'badge';
+            badge.textContent = item.cf.toFixed(1);
+            expDiv.appendChild(badge);
+        } else {
+            expDiv.textContent = '-';
+        }
+        row.appendChild(expDiv);
+
+        const userDiv = document.createElement('div');
+        userDiv.className = 'slider-container';
+        userDiv.id = `slider_container_${index}`;
+        if (hasCF) {
+            const slider = document.createElement('input');
+            slider.type = 'range';
+            slider.id = `val_${index}`;
+            slider.min = '0.1';
+            slider.max = '1.0';
+            slider.step = '0.1';
+            slider.value = '1.0';
+            
+            const valDisplay = document.createElement('span');
+            valDisplay.id = `disp_${index}`;
+            valDisplay.textContent = '1.0';
+            valDisplay.style.minWidth = '30px';
+            
+            slider.oninput = (e) => { valDisplay.textContent = parseFloat(e.target.value).toFixed(1); };
+            
+            userDiv.appendChild(slider);
+            userDiv.appendChild(valDisplay);
+        }
+        row.appendChild(userDiv);
+        listEl.appendChild(row);
+    });
+
+    function toggleSlider(index, isChecked, hasCF) {
+        if (!hasCF) return;
+        const container = document.getElementById(`slider_container_${index}`);
+        if (isChecked) container.classList.add('active');
+        else container.classList.remove('active');
+    }
+
+    function calculateDiagnosis() {
+        let matchedCBR = [];
+        let matchedCF = [];
+        let matchedCBRWeight = 0;
+
+        // 1. Gather Data
+        dataset.forEach((item, index) => {
+            const isChecked = document.getElementById(`chk_${index}`).checked;
+            if (isChecked) {
+                if (item.w > 0) {
+                    matchedCBRWeight += item.w;
+                    matchedCBR.push(item);
+                }
+                if (item.cf !== null) {
+                    const userCF = parseFloat(document.getElementById(`val_${index}`).value);
+                    const effectiveCF = item.cf * userCF;
+                    matchedCF.push({
+                        label: item.label,
+                        baseCF: item.cf,
+                        userCF: userCF,
+                        effCF: effectiveCF
+                    });
+                }
+            }
+        });
+
+        // 2. Compute Scores
+        const cbrScore = matchedCBRWeight / totalCBRWeight;
+
+        let finalCF = 0;
+        let cfBreakdownHtml = "";
+        
+        if (matchedCF.length > 0) {
+            finalCF = matchedCF[0].effCF;
+            cfBreakdownHtml += `<strong>Initial CF:</strong> ${matchedCF[0].label} = ${finalCF.toFixed(4)}<br>`;
+            
+            for (let i = 1; i < matchedCF.length; i++) {
+                let cfOld = finalCF;
+                let cfNew = matchedCF[i].effCF;
+                finalCF = cfOld + cfNew * (1 - cfOld);
+                
+                cfBreakdownHtml += `
+                <div class="math-line">
+                    <strong>Step ${i}:</strong> Combining with ${matchedCF[i].label} (CF: ${cfNew.toFixed(4)})<br>
+                    CF_combine = ${cfOld.toFixed(4)} + ${cfNew.toFixed(4)} × (1 - ${cfOld.toFixed(4)}) = ${finalCF.toFixed(4)}
+                </div>`;
+            }
+        } else {
+            cfBreakdownHtml = "No CF symptoms selected.";
+        }
+
+        const cfWeight = 0.8;
+        const cbrWeight = 0.2;
+        const hybridScore = (cbrScore * cbrWeight) + (finalCF * cfWeight);
+
+        // 3. Update Results UI
+        document.getElementById('resultCard').style.display = 'block';
+        document.getElementById('cbrResult').textContent = (cbrScore * 100).toFixed(2) + '%';
+        document.getElementById('cfResult').textContent = (finalCF * 100).toFixed(2) + '%';
+        document.getElementById('finalResult').textContent = (hybridScore * 100).toFixed(2) + '%';
+
+        // 4. Generate Breakdown HTML
+        let cbrList = matchedCBR.length > 0 
+            ? matchedCBR.map(m => `<li>${m.label} (w: ${m.w.toFixed(6)})</li>`).join('')
+            : "<li>No CBR features selected.</li>";
+
+        let cfList = matchedCF.length > 0 
+            ? matchedCF.map(m => `<li>${m.label}: Expert(${m.baseCF}) × User(${m.userCF.toFixed(1)}) = <strong>${m.effCF.toFixed(3)}</strong></li>`).join('')
+            : "<li>No CF features selected.</li>";
+
+        const breakdownPanel = document.getElementById('breakdownPanel');
+        breakdownPanel.innerHTML = `
+            <h4>Calculation Breakdown</h4>
+            
+            <div class="breakdown-section">
+                <strong>1. CBR Similarity Calculation</strong>
+                <ul>${cbrList}</ul>
+                <div class="math-line">
+                    Sum of matched weights: ${matchedCBRWeight.toFixed(6)}<br>
+                    Total possible weights: ${totalCBRWeight.toFixed(6)}<br>
+                    <strong>CBR Score:</strong> ${matchedCBRWeight.toFixed(6)} / ${totalCBRWeight.toFixed(6)} = <strong>${cbrScore.toFixed(4)}</strong>
+                </div>
+            </div>
+
+            <div class="breakdown-section">
+                <strong>2. Certainty Factor (CF) Calculation</strong>
+                <ul>${cfList}</ul>
+                ${cfBreakdownHtml}
+                <strong>Final Certainty Factor:</strong> <strong>${finalCF.toFixed(4)}</strong>
+            </div>
+
+            <div class="breakdown-section">
+                <strong>3. Final Hybrid Score Integration</strong>
+                <div class="math-line">
+                    Formula: (CBR_Weight × CBR_Score) + (CF_Weight × CF_Score)<br>
+                    = (${cbrWeight.toFixed(2)} × ${cbrScore.toFixed(4)}) + (${cfWeight.toFixed(2)} × ${finalCF.toFixed(4)})<br>
+                    = ${ (cbrWeight * cbrScore).toFixed(4) } + ${ (cfWeight * finalCF).toFixed(4) }<br>
+                    <strong>Final Score: ${hybridScore.toFixed(4)} (${(hybridScore * 100).toFixed(2)}%)</strong>
+                </div>
+            </div>
+        `;
+    }
+</script>
+
+</body>
+</html>
